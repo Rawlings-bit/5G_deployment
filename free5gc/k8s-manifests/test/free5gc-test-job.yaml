@@ -1,0 +1,109 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: free5gc-test-config
+data:
+ example.json: |
+  {
+      "GlobalGNBID": {
+              "mcc": 208,
+              "mnc": 93,
+              "gnbid": 1
+      },
+      "SupportedTAList" : [
+              {
+                      "TAC": "0x000001",
+                      "BroadcastPLMNList": [
+                              {
+                                      "MCC": 208,
+                                      "MNC": 93,
+                                      "SliceSupportList": [
+                                              {
+                                                      "SST": 1,
+                                                      "SD": "0x010203"
+                                              }
+                                      ]
+                              }
+                      ]
+              }
+      ],
+      "PagingDRX" : "v32",
+      "RANUENGAPID" : 0,
+      "UE": {
+              "msin": "0000000003",
+              "mcc": 208,
+              "mnc": 93,
+              "RoutingIndicator": 1234,
+              "ProtectionScheme": "null",
+              "AuthParam": {
+                      "K": "8baf473f2f8fd09487cccbd7097c6862",
+                      "OPc": "8e27b6af0e692e750f32667a3b14605d"
+              }
+      },
+      "ULInfoNR": {
+              "NRCGI": {
+                      "PLMN": {
+                              "mcc": 208,
+                              "mnc": 93
+                      },
+                      "NRCellID": 1
+              },
+              "TAI": {
+                      "PLMN": {
+                              "mcc": 208,
+                              "mnc": 93
+                      },
+                      "TAC": "0x000001"
+              }
+      }
+  }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: free5gc-test-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: gnbsim-container
+        image: registry.gitlab.com/infinitydon/registry/hhorai-gnbsim
+        command: ["./example"]
+        args: ["-ip", "192.168.2.2"]               
+        imagePullPolicy: Always
+        volumeMounts:
+          - name: gnbsim-config
+            mountPath: /go/src/github.com/hhorai/gnbsim/example/example.json
+            subPath: example.json        
+      restartPolicy: Never 
+      initContainers:
+      - name: init-network-client
+        image: sdnvortex/network-controller:v0.4.9
+        command: ["/go/bin/client"]
+        args: ["-s=unix:///tmp/vortex.sock", "-b=br0", "-n=eth1", "-i=192.168.2.50/24", "-g=192.168.2.254"]
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_UUID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        volumeMounts:
+        - mountPath: /tmp/
+          name: grpc-sock
+      volumes:
+      - name: grpc-sock
+        hostPath:
+          path: /tmp/vortex/
+      - name: gnbsim-config
+        configMap:
+          name: free5gc-test-config
+          items: 
+            - key: example.json
+              path: example.json                  

@@ -1,0 +1,14 @@
+apiVersion: danm.k8s.io/v1
+kind: DanmNet
+metadata:
+  name: s6a
+  namespace: open5gs
+spec:
+  NetworkID: s6a
+  NetworkType: ipvlan
+  Options:
+    host_device: enp0s8
+    container_prefix: s6a
+    rt_tables: 250
+    vlan: 200
+    cidr: 192.168.200.32/28

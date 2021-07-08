@@ -1,0 +1,17 @@
+FROM golang:1.12.9
+
+WORKDIR /root/
+
+RUN apt update -y && apt -y install git wget
+
+WORKDIR $GOPATH/src
+RUN git clone https://github.com/free5gc/free5gc.git && wget https://github.com/free5gc/free5gc/raw/master/install_env.sh && \
+chmod +x install_env.sh && ./install_env.sh
+
+WORKDIR $GOPATH/src/free5gc/
+
+RUN git submodule update --init
+
+WORKDIR $GOPATH/src/free5gc/webconsole
+
+CMD ["go", "run", "server.go"]

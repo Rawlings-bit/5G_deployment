@@ -1,0 +1,17 @@
+FROM golang:1.12.9
+
+WORKDIR /root/
+
+RUN apt update -y && \
+apt -y install wget git
+
+WORKDIR $GOPATH/src
+RUN git clone https://github.com/free5gc/free5gc.git free5gc
+
+WORKDIR $GOPATH/src/free5gc
+RUN git submodule update --init && chmod +x ./install_env.sh && \
+./install_env.sh
+
+COPY generate_auth_data.go src/udm/udm_producer/
+
+RUN go build -o bin/udm -x src/udm/udm.go

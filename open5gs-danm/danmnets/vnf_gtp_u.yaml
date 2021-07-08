@@ -1,0 +1,14 @@
+apiVersion: danm.k8s.io/v1
+kind: DanmNet
+metadata:
+  name: gtpu
+  namespace: open5gs
+spec:
+  NetworkID: gtpu
+  NetworkType: ipvlan
+  Options:
+    host_device: enp0s8
+    container_prefix: gtpu
+    rt_tables: 250
+    vlan: 500
+    cidr: 10.10.11.16/28
